@@ -1,0 +1,292 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI 沉浸式聊天</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+      :root {
+        --main-bg: #e5ddd5;
+        --whatsapp-green: #075e54;
+        --user-msg: #dcf8c6;
+      }
+      body {
+        font-family: "Microsoft JhengHei", sans-serif;
+        background: var(--main-bg);
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      #chat-container {
+        width: 450px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* 頂部列：顯示角色、User ID 與記憶按鈕 */
+      #header {
+        background: var(--whatsapp-green);
+        color: white;
+        padding: 12px 15px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px solid white;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .avatar:hover {
+        transform: scale(1.1);
+      }
+
+      .header-info {
+        flex: 1;
+      }
+      .role-name {
+        font-weight: bold;
+        font-size: 1.1em;
+      }
+      .user-status {
+        font-size: 0.85em;
+        opacity: 0.9;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      /* User ID 輸入區域：放在頂部的小區塊 */
+      #user-config {
+        background: #f0f0f0;
+        padding: 8px 15px;
+        border-bottom: 1px solid #ddd;
+        font-size: 0.9em;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      #user-id-input {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 3px 8px;
+        width: 80px;
+      }
+
+      #chat-box {
+        height: 450px;
+        overflow-y: auto;
+        padding: 20px;
+        background: #efe7dd;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      /* 訊息樣式 */
+      .msg {
+        padding: 10px 15px;
+        border-radius: 15px;
+        max-width: 80%;
+        font-size: 15px;
+        line-height: 1.5;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        word-wrap: break-word;
+      }
+      .user {
+        align-self: flex-end;
+        background: var(--user-msg);
+        border-top-right-radius: 0;
+      }
+      .ai {
+        align-self: flex-start;
+        background: white;
+        border-top-left-radius: 0;
+      }
+
+      #input-area {
+        padding: 15px;
+        background: #f0f0f0;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      #msg-input {
+        flex: 1;
+        border: none;
+        padding: 12px 18px;
+        border-radius: 25px;
+        outline: none;
+        font-size: 15px;
+      }
+      .send-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .send-btn:hover {
+        transform: scale(1.2);
+      }
+
+      .action-text {
+        color: #6a737d; /* 稍微淡一點的灰色 */
+        font-style: italic; /* 斜體 */
+        font-weight: normal;
+        padding: 0 2px;
+      }
+
+      .memory-btn {
+        background: #128c7e;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.8em;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chat-container">
+      <div id="header">
+        <img
+          id="current-avatar"
+          class="avatar"
+          src="https://api.dicebear.com/7.x/adventurer/svg?seed=Natsuki"
+          onclick="showMemory()"
+          title="點擊查看yoyo對你的記憶"
+        />
+        <div class="header-info">
+          <div class="role-name">yoyo</div>
+          <div class="user-status">🟢 線上中</div>
+        </div>
+        <button class="memory-btn" onclick="showMemory()">🧠 記憶摘要</button>
+      </div>
+
+      <div id="user-config">
+        <span>當前使用者 ID:</span>
+        <input
+          type="text"
+          id="user-id-input"
+          value="u1"
+          onchange="handleUserChange()"
+          title="修改 ID 並按 Enter 會清空對話框"
+        />
+      </div>
+
+      <div id="chat-box"></div>
+
+      <div id="input-area">
+        <input
+          type="text"
+          id="msg-input"
+          placeholder="傳送您的訊息..."
+          onkeypress="if (event.keyCode == 13) sendMsg();"
+        />
+        <button class="send-btn" onclick="sendMsg()">🚀</button>
+      </div>
+    </div>
+
+    <script>
+      // 1. 修改 ID 时的確認與清空
+      function handleUserChange() {
+        const newId = document.getElementById("user-id-input").value;
+        Swal.fire({
+          title: "切換使用者？",
+          text: `將以 ${newId} 的身份重新開始對話`,
+          icon: "info",
+          confirmButtonColor: "#075e54",
+          confirmButtonText: "確定",
+        }).then(() => {
+          document.getElementById("chat-box").innerHTML = "";
+        });
+      }
+
+      // 2. 查看記憶摘要的功能 (需確保後端有 /memory/{user_id} 路由)
+      async function showMemory() {
+        const userId = document.getElementById("user-id-input").value;
+        try {
+          const response = await fetch(`/memory/${userId}`);
+          const data = await response.json();
+
+          Swal.fire({
+            title: "yoyo的筆記本",
+            html: `<div style="text-align: left; background: #f9f9f9; padding: 10px; border-radius: 5px;">${data.summary || "她目前對你還沒什麼特別的印象..."}</div>`,
+            icon: "info",
+            confirmButtonColor: "#075e54",
+          });
+        } catch (error) {
+          Swal.fire("錯誤", "無法取得記憶內容", "error");
+        }
+      }
+
+      // 3. 發送訊息
+      async function sendMsg() {
+        const input = document.getElementById("msg-input");
+        const userId = document.getElementById("user-id-input").value;
+        const box = document.getElementById("chat-box");
+
+        if (!input.value.trim() || !userId.trim()) {
+          Swal.fire("提示", "請輸入訊息與 User ID", "warning");
+          return;
+        }
+
+        const text = input.value;
+        box.innerHTML += `<div class="msg user">${text}</div>`;
+        input.value = "";
+        box.scrollTop = box.scrollHeight;
+
+        // 定義一個處理文字的函式
+        function formatAIResponse(text) {
+          // 1. 處理 *星號動作* (例如 *臉紅*)
+          text = text.replace(
+            /\*(.*?)\*/g,
+            '<span class="action-text">* $1 *</span>',
+          );
+
+          // 2. 處理 (括號動作) (例如 (撇過頭))
+          text = text.replace(
+            /\((.*?)\)/g,
+            '<span class="action-text">($1)</span>',
+          );
+
+          // 3. 處理 「」 讓對話更明顯
+          text = text.replace(
+            /「(.*?)」/g,
+            '<strong style="color:#075e54;">「$1」</strong>',
+          );
+
+          return text;
+        }
+        try {
+          const response = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: text,
+              user_id: userId,
+              persona_id: "yoyo",
+            }),
+          });
+
+          const data = await response.json();
+          const formattedReply = formatAIResponse(data.reply);
+          box.innerHTML += `<div class="msg ai">${formattedReply}</div>`;
+          box.scrollTop = box.scrollHeight;
+        } catch (error) {
+          box.innerHTML += `<div class="msg ai" style="color: red;">(連線失敗，請檢查後端是否開啟)</div>`;
+        }
+      }
+    </script>
+  </body>
+</html>
