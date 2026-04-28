@@ -1,0 +1,255 @@
+:root {
+  --main-bg: #e5ddd5;
+  --whatsapp-green: #075e54;
+  --user-msg: #dcf8c6;
+  --action-gray: #6a737d;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Microsoft JhengHei", sans-serif;
+  background: var(--main-bg);
+  overflow: hidden; /* 防止選角時出現捲軸 */
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* --- 選角大廳 (全螢幕遮罩) --- */
+#selection-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  z-index: 1000; /* 確保在最上層 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s ease;
+}
+
+/* 關鍵修正：當加入 .hidden 類別時，完全隱藏並釋放點擊區域 */
+#selection-overlay.hidden {
+  opacity: 0;
+  pointer-events: none; /* 讓滑鼠穿透過去，點擊下方的聊天室 */
+  transform: scale(1.1); /* 增加一點放大的消失效果 */
+}
+
+.glow-text {
+  color: white;
+  text-shadow: 0 0 10px #00d2ff;
+  margin-bottom: 40px;
+  font-size: 2.5em;
+}
+
+/* 網格佈局 */
+.character-grid {
+  display: flex;
+  gap: 30px;
+  padding: 20px;
+}
+
+/* 角色卡片設計 */
+.char-card {
+  width: 250px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 讓回彈更有動感 */
+  color: white;
+  text-align: center;
+}
+
+/* Hover 放大特效 */
+.char-card:hover {
+  transform: translateY(-15px) scale(1.05);
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+  border-color: #00d2ff;
+}
+
+.char-img-container {
+  background: #f0f0f0;
+  padding: 20px;
+}
+
+.char-img-container img {
+  width: 120px;
+  height: 120px;
+}
+
+.char-info {
+  padding: 20px;
+}
+.char-info p {
+  font-size: 0.9em;
+  color: #ccc;
+  margin: 10px 0;
+  min-height: 40px;
+}
+.tag {
+  background: #00d2ff;
+  padding: 3px 12px;
+  border-radius: 12px;
+  font-size: 0.8em;
+}
+
+/* 點擊選取後的隱藏動畫 */
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- 聊天室介面 (在下方) --- */
+#chat-container {
+  width: 450px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 頂部列：顯示角色、User ID 與記憶按鈕 */
+#header {
+  background: var(--whatsapp-green);
+  color: white;
+  padding: 12px 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid white;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.avatar:hover {
+  transform: scale(1.1);
+}
+
+.header-info {
+  flex: 1;
+}
+.role-name {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+.user-status {
+  font-size: 0.85em;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* User ID 輸入區域：放在頂部的小區塊 */
+#user-config {
+  background: #f0f0f0;
+  padding: 8px 15px;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+#user-id-input {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 3px 8px;
+  width: 80px;
+}
+
+#chat-box {
+  height: 450px;
+  overflow-y: auto;
+  padding: 20px;
+  background: #efe7dd;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 訊息樣式 */
+.msg {
+  padding: 10px 15px;
+  border-radius: 15px;
+  max-width: 80%;
+  font-size: 15px;
+  line-height: 1.5;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  word-wrap: break-word;
+}
+.user {
+  align-self: flex-end;
+  background: var(--user-msg);
+  border-top-right-radius: 0;
+}
+.ai {
+  align-self: flex-start;
+  background: white;
+  border-top-left-radius: 0;
+}
+
+#input-area {
+  padding: 15px;
+  background: #f0f0f0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+#msg-input {
+  flex: 1;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 25px;
+  outline: none;
+  font-size: 15px;
+}
+.send-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.send-btn:hover {
+  transform: scale(1.2);
+}
+
+.ai .action-text {
+  color: #6a737d; /* 稍微淡一點的灰色 */
+  font-style: italic; /* 斜體 */
+  font-weight: normal;
+  padding: 0 2px;
+}
+
+/* 確保聊天氣泡內的加粗文字顏色正確 */
+.ai strong {
+  color: #075e54;
+  font-weight: bold;
+}
+
+.memory-btn {
+  background: #128c7e;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8em;
+}
