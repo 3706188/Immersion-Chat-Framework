@@ -14,13 +14,10 @@
       <div class="character-grid">
         <div
           class="char-card"
-          onclick="
-            selectPersona(
-              'tsundere',
-              '夏樹',
-              'https://api.dicebear.com/7.x/adventurer/svg?seed=Natsuki',
-            )
-          "
+          id="card-natsuki"
+          data-id="tsundere"
+          data-name="夏樹"
+          data-avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Natsuki"
         >
           <div class="char-img-container">
             <img
@@ -37,13 +34,10 @@
 
         <div
           class="char-card"
-          onclick="
-            selectPersona(
-              'yoyo',
-              'yoyo',
-              'https://api.dicebear.com/7.x/adventurer/svg?seed=Peach',
-            )
-          "
+          id="card-yoyo"
+          data-id="yoyo"
+          data-name="yoyo"
+          data-avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Peach"
         >
           <div class="char-img-container">
             <img
@@ -60,13 +54,10 @@
 
         <div
           class="char-card"
-          onclick="
-            selectPersona(
-              'tt',
-              '大叔',
-              'https://api.dicebear.com/7.x/adventurer/svg?seed=Edwin',
-            )
-          "
+          id="card-tt"
+          data-id="tt"
+          data-name="大叔"
+          data-avatar="https://api.dicebear.com/7.x/adventurer/svg?seed=Edwin"
         >
           <div class="char-img-container">
             <img
@@ -88,14 +79,13 @@
           id="current-avatar"
           class="avatar"
           src="https://api.dicebear.com/7.x/adventurer/svg?seed=Natsuki"
-          onclick="showMemory()"
           title="點擊查看yoyo對你的記憶"
         />
         <div class="header-info">
           <div class="role-name" id="display-name">yoyo</div>
           <div class="user-status">🟢 線上中</div>
         </div>
-        <button class="memory-btn" onclick="showMemory()">🧠 記憶摘要</button>
+        <button class="memory-btn">🧠 記憶摘要</button>
       </div>
 
       <div id="user-config">
@@ -104,7 +94,6 @@
           type="text"
           id="user-id-input"
           value="u1"
-          onchange="handleUserChange()"
           title="修改 ID 並按 Enter 會清空對話框"
         />
       </div>
@@ -112,13 +101,8 @@
       <div id="chat-box"></div>
 
       <div id="input-area">
-        <input
-          type="text"
-          id="msg-input"
-          placeholder="傳送您的訊息..."
-          onkeypress="if (event.keyCode == 13) sendMsg();"
-        />
-        <button class="send-btn" onclick="sendMsg()">🚀</button>
+        <input type="text" id="msg-input" placeholder="傳送您的訊息..." />
+        <button class="send-btn">🚀</button>
       </div>
     </div>
   </body>

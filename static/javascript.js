@@ -16,27 +16,63 @@ function formatAIResponse(text) {
   return text;
 }
 
-// --- 3. 被 HTML 呼叫的函式 (全部掛載到 window) ---
+// --- 3. 被 HTML 呼叫的函式 ---
 
-// A. 選擇角色功能
-window.selectPersona = function (id, name, avatarUrl) {
-  console.log(`[系統] 切換至角色: ${name} (ID: ${id})`);
+// 當 DOM (HTML) 載入完成後才執行綁定
+document.addEventListener("DOMContentLoaded", () => {
+  // 1. 角色卡片點擊
+  const cards = document.querySelectorAll(".char-card");
+  cards.forEach((card) => {
+    card.addEventListener("click", () => {
+      // 從 HTML 的 data- 屬性中抓取資料
+      const id = card.dataset.id;
+      const name = card.dataset.name;
+      const avatarUrl = card.dataset.avatar;
+      const box = document.getElementById("chat-box");
+      selectPersona(id, name, avatarUrl);
+    });
+  });
+
+  // 2. avatar 點擊（記憶）
+  const avatar = document.getElementById("current-avatar");
+  avatar.addEventListener("click", showMemory);
+
+  // 3. 記憶按鈕
+  const memoryBtn = document.querySelector(".memory-btn");
+  memoryBtn.addEventListener("click", showMemory);
+
+  //4. user id change
+  const userInput = document.getElementById("user-id-input");
+  userInput.addEventListener("change", handleUserChange);
+
+  // 5. 發送訊息
+  const sendBtn = document.querySelector(".send-btn");
+  sendBtn.addEventListener("click", sendMsg);
+
+  // 6. Enter 鍵發送訊息
+  const msgInput = document.getElementById("msg-input");
+  msgInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendMsg();
+    }
+  });
+});
+
+//切換角色
+function selectPersona(id, name, avatarUrl) {
   currentPersonaId = id;
-
   const displayName = document.getElementById("display-name");
   const currentAvatar = document.getElementById("current-avatar");
-  const box = document.getElementById("chat-box");
   const overlay = document.getElementById("selection-overlay");
+  const chatBox = document.getElementById("chat-box");
 
-  // 更新 UI 文字與頭貼
   if (displayName) displayName.innerText = name;
   if (currentAvatar) {
+    currentAvatar.title = `點擊查看${name}對你的記憶`;
     currentAvatar.src = avatarUrl;
-    currentAvatar.title = `點擊查看 ${name} 對你的記憶`;
   }
-
-  // 清空聊天室並隱藏選角層
-  if (box) box.innerHTML = "";
+  if (chatBox) chatBox.innerHTML = ""; // 切換角色時清空對話框
   if (overlay) overlay.classList.add("hidden");
 
   // 提示通知
@@ -47,12 +83,13 @@ window.selectPersona = function (id, name, avatarUrl) {
     toast: true,
     position: "top-end",
     icon: "success",
+    background: "#f0f0f0",
   });
-};
+}
 
 // B. 查看記憶摘要
-window.showMemory = async function () {
-  const userId = document.getElementById("user-id-input").value;
+async function showMemory() {
+  const userId = document.getElementById("user-id-input").value.trim();
   const personaName = document.getElementById("display-name").innerText;
 
   console.log(`[系統] 正在讀取 ${userId} 對於 ${personaName} 的記憶...`);
@@ -70,29 +107,33 @@ window.showMemory = async function () {
   } catch (error) {
     Swal.fire("錯誤", "目前尚無摘要內容，請多聊幾句後再試！", "error");
   }
-};
+}
 
 // C. 修改 User ID 確認
-window.handleUserChange = function () {
-  const newId = document.getElementById("user-id-input").value;
+function handleUserChange() {
+  const newUserId = document.getElementById("user-id-input").value.trim();
   Swal.fire({
     title: "切換使用者？",
-    text: `將以 ${newId} 的身份重新開始對話`,
+    text: `將以 ${newUserId} 的身份重新開始對話`,
     icon: "info",
+    showCancelButton: true,
     confirmButtonColor: "#075e54",
     confirmButtonText: "確定",
-  }).then(() => {
-    document.getElementById("chat-box").innerHTML = "";
+    cancelButtonText: "取消",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      document.getElementById("chat-box").innerHTML = "";
+    }
   });
-};
+}
 
 // D. 發送訊息功能
-window.sendMsg = async function () {
+async function sendMsg() {
   const input = document.getElementById("msg-input");
-  const userId = document.getElementById("user-id-input").value;
+  const userId = document.getElementById("user-id-input").value.trim();
   const box = document.getElementById("chat-box");
 
-  if (!input.value.trim() || !userId.trim()) {
+  if (!input.value.trim() || !userId) {
     Swal.fire("提示", "請輸入訊息與 User ID", "warning");
     return;
   }
@@ -120,4 +161,4 @@ window.sendMsg = async function () {
   } catch (error) {
     box.innerHTML += `<div class="msg ai" style="color: red;">(連線失敗，請檢查後端是否開啟)</div>`;
   }
-};
+}
