@@ -92,10 +92,10 @@ async function showMemory() {
   const userId = document.getElementById("user-id-input").value.trim();
   const personaName = document.getElementById("display-name").innerText;
 
-  console.log(`[系統] 正在讀取 ${userId} 對於 ${personaName} 的記憶...`);
+  console.log(`[系統] 正在讀取 ${userId} 對於 ${currentPersonaId} 的記憶...`);
 
   try {
-    const response = await fetch(`/memory/${userId}`);
+    const response = await fetch(`/memory/${userId}/${currentPersonaId}`);
     const data = await response.json();
 
     Swal.fire({

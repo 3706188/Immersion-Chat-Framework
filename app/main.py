@@ -18,10 +18,10 @@ base_dir = os.path.dirname(current_dir)
 static_path = os.path.join(base_dir, "static")
 # 1. 掛載靜態檔案 (如果你有圖片或 CSS 放在 static 裡)
 app.mount("/static", StaticFiles(directory=static_path), name="static")
-@app.get("/memory/{user_id}")
-def read_memory(user_id: str):
+@app.get("/memory/{user_id}/{persona_id}")
+def read_memory(user_id: str, persona_id: str):
     from app.memory import get_summary
-    summary = get_summary(user_id)
+    summary = get_summary(user_id, persona_id)
     return {"summary": summary}
 @app.get("/")
 def index():
@@ -35,8 +35,8 @@ def index():
 
 def chat(req: ChatRequest):
     persona = get_persona(req.persona_id)
-    history = get_history(req.user_id)
-    summary = get_summary(req.user_id)
+    history = get_history(req.user_id, req.persona_id)
+    summary = get_summary(req.user_id, req.persona_id)
     
     # 傳入 llm 前可以先在邏輯層做截斷，或者讓 llm.py 內部處理（如上方代碼）
     reply = get_ai_response(req.message, persona, history, summary=summary)

@@ -20,7 +20,9 @@ class ChatLog(Base):
 
 class UserMemory(Base):
     __tablename__ = "user_memory"
-    user_id = Column(String, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True) 
+    user_id = Column(String, index=True)
+    persona_id = Column(String, index=True) # <-- 新增角色 ID 欄位
     summary = Column(Text, default="") # 這裡存摘要
 
 # 建立資料表
