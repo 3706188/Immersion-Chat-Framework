@@ -8,20 +8,16 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
-# 告訴 FastAPI 靜態檔案放在 static 資料夾
-app.mount("/static", StaticFiles(directory=static_path), name="static")
+
 # 取得目前 main.py 的絕對路徑
 current_dir = os.path.dirname(os.path.abspath(__file__))
 # 取得根目錄路徑 (app 的上一層)
 base_dir = os.path.dirname(current_dir)
 # 拼接出 static 資料夾的絕對路徑
 static_path = os.path.join(base_dir, "static")
+# 告訴 FastAPI 靜態檔案放在 static 資料夾
+app.mount("/static", StaticFiles(directory=static_path), name="static")
 
-@app.get("/memory/{user_id}/{persona_id}")
-def read_memory(user_id: str, persona_id: str):
-    from app.memory import get_summary
-    summary = get_summary(user_id, persona_id)
-    return {"summary": summary}
 @app.get("/")
 def index():
     # 確保讀取的是根目錄下的 static/index.html
@@ -29,6 +25,14 @@ def index():
     if os.path.exists(html_file):
         return FileResponse(html_file)
     return {"error": "找不到 index.html，請檢查 static 資料夾位置"}
+
+
+@app.get("/memory/{user_id}/{persona_id}")
+def read_memory(user_id: str, persona_id: str):
+    from app.memory import get_summary
+    summary = get_summary(user_id, persona_id)
+    return {"summary": summary}
+
 
 @app.post("/chat")
 

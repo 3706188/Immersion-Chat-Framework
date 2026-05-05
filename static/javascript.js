@@ -1,5 +1,7 @@
 // --- 1. 全域變數定義 ---
 let currentPersonaId = "tsundere"; // 預設角色 ID
+//防止重複送出打字
+let isSending = false;
 
 // --- 2. 輔助函式：文字渲染 (動作渲染) ---
 function formatAIResponse(text) {
@@ -14,6 +16,43 @@ function formatAIResponse(text) {
     '<strong style="color:#075e54;">「$1」</strong>',
   );
   return text;
+}
+
+// --- 打字動畫 Loading 泡泡 ---
+function showTypingIndicator() {
+  const box = document.getElementById("chat-box");
+  const indicator = document.createElement("div");
+  indicator.className = "msg ai typing-indicator";
+  indicator.id = "typing-indicator";
+  // 三個跳動的點點
+  indicator.innerHTML = "<span></span><span></span><span></span>";
+  box.appendChild(indicator);
+  box.scrollTop = box.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  const indicator = document.getElementById("typing-indicator");
+  if (indicator) indicator.remove();
+}
+
+// --- 控制送出按鈕的狀態 ---
+function setSendingState(sending) {
+  isSending = sending;
+  const sendBtn = document.querySelector(".send-btn");
+  const msgInput = document.getElementById("msg-input");
+
+  if (sending) {
+    sendBtn.disabled = true;
+    sendBtn.style.opacity = "0.4";
+    sendBtn.style.cursor = "not-allowed";
+    msgInput.disabled = true;
+  } else {
+    sendBtn.disabled = false;
+    sendBtn.style.opacity = "1";
+    sendBtn.style.cursor = "pointer";
+    msgInput.disabled = false;
+    msgInput.focus(); // 回覆後自動 focus 輸入框
+  }
 }
 
 // --- 3. 被 HTML 呼叫的函式 ---
@@ -59,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-//切換角色
+// --- 切換角色 ---
 function selectPersona(id, name, avatarUrl) {
   currentPersonaId = id;
   const displayName = document.getElementById("display-name");
@@ -72,7 +111,7 @@ function selectPersona(id, name, avatarUrl) {
     currentAvatar.title = `點擊查看${name}對你的記憶`;
     currentAvatar.src = avatarUrl;
   }
-  if (chatBox) chatBox.innerHTML = ""; // 切換角色時清空對話框
+  if (chatBox) chatBox.innerHTML = "";
   if (overlay) overlay.classList.add("hidden");
 
   // 提示通知
@@ -129,6 +168,8 @@ function handleUserChange() {
 
 // D. 發送訊息功能
 async function sendMsg() {
+  // 防止重複送出
+  if (isSending) return;
   const input = document.getElementById("msg-input");
   const userId = document.getElementById("user-id-input").value.trim();
   const box = document.getElementById("chat-box");
@@ -138,10 +179,19 @@ async function sendMsg() {
     return;
   }
 
-  const text = input.value;
-  box.innerHTML += `<div class="msg user">${text}</div>`;
+  const text = input.value.trim();
   input.value = "";
+
+  // 顯示使用者訊息
+  const userMsgEl = document.createElement("div");
+  userMsgEl.className = "msg user";
+  userMsgEl.textContent = text;
+  box.appendChild(userMsgEl);
   box.scrollTop = box.scrollHeight;
+
+  // 進入 loading 狀態
+  setSendingState(true);
+  showTypingIndicator();
 
   try {
     const response = await fetch("/chat", {
@@ -155,10 +205,22 @@ async function sendMsg() {
     });
 
     const data = await response.json();
-    const formattedReply = formatAIResponse(data.reply);
-    box.innerHTML += `<div class="msg ai">${formattedReply}</div>`;
+    removeTypingIndicator();
+
+    const aiMsgEl = document.createElement("div");
+    aiMsgEl.className = "msg ai";
+    aiMsgEl.innerHTML = formatAIResponse(data.reply);
+    box.appendChild(aiMsgEl);
     box.scrollTop = box.scrollHeight;
   } catch (error) {
-    box.innerHTML += `<div class="msg ai" style="color: red;">(連線失敗，請檢查後端是否開啟)</div>`;
+    removeTypingIndicator();
+    const errEl = document.createElement("div");
+    errEl.className = "msg ai";
+    errEl.style.color = "red";
+    errEl.textContent = "(連線失敗，請檢查後端是否開啟)";
+    box.appendChild(errEl);
+  } finally {
+    // 無論成功或失敗，都恢復送出狀態
+    setSendingState(false);
   }
 }
