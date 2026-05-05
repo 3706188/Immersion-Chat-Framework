@@ -9,15 +9,14 @@ from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 # 告訴 FastAPI 靜態檔案放在 static 資料夾
-app.mount("/static", StaticFiles(directory = "static"), name = "static")
+app.mount("/static", StaticFiles(directory=static_path), name="static")
 # 取得目前 main.py 的絕對路徑
 current_dir = os.path.dirname(os.path.abspath(__file__))
 # 取得根目錄路徑 (app 的上一層)
 base_dir = os.path.dirname(current_dir)
 # 拼接出 static 資料夾的絕對路徑
 static_path = os.path.join(base_dir, "static")
-# 1. 掛載靜態檔案 (如果你有圖片或 CSS 放在 static 裡)
-app.mount("/static", StaticFiles(directory=static_path), name="static")
+
 @app.get("/memory/{user_id}/{persona_id}")
 def read_memory(user_id: str, persona_id: str):
     from app.memory import get_summary
@@ -25,7 +24,7 @@ def read_memory(user_id: str, persona_id: str):
     return {"summary": summary}
 @app.get("/")
 def index():
-    # 2. 確保讀取的是根目錄下的 static/index.html
+    # 確保讀取的是根目錄下的 static/index.html
     html_file = os.path.join(static_path, "index.html")
     if os.path.exists(html_file):
         return FileResponse(html_file)

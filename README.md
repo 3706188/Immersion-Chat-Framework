@@ -18,7 +18,7 @@
 
 ## 📦 安裝與啟動
 
-1. 複製專案：`git clone https://github.com/你的帳號/Natsuki-AI-Companion.git`
+1. 複製專案：`git clone https://github.com/你的帳號/Immersion-Chat-Framework.git`
 2. 安裝套件：`pip install -r requirements.txt`
 3. 設定環境變數：建立 `.env` 並填入 `GEMINI_API_KEY=你的金鑰`
 4. 啟動服務：`uvicorn app.main:app --reload`

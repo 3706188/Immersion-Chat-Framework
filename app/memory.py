@@ -15,7 +15,7 @@ def add_message(user_id: str, persona_id: str, role: str, content: str):
         
         ).count()
         if count >= 15: 
-            trigger_summarization(user_id)
+            trigger_summarization(user_id, persona_id)
     finally:
         db.close()
 
