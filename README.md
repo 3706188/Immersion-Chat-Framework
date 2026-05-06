@@ -1,28 +1,184 @@
-# 沉浸式 AI 聊天系統 🌸
+# 🎮 沉浸式 AI 角色陪伴聊天系統
 
-這是一個基於 **FastAPI** 與 **Google Gemini 2.0** 打造的沉浸式 AI 陪伴對話系統。本專案特別強化了 AI 的長短期記憶處理與角色人格演繹。
+> 一個具備角色選擇大廳、長期記憶與沉浸式角色扮演功能的 AI 陪伴聊天系統，基於 FastAPI 與 Google Gemini 打造。
 
-## 🚀 技術亮點
+---
 
-- **沉浸式角色扮演**：透過 System Instruction 深度定制角色人格，並優化前端動作描述渲染。
-- **自動記憶整合系統**：當對話累積至一定數量時，系統會自動呼叫 LLM 進行摘要，並將「長期記憶」存入資料庫，有效節省 Token 並維持背景連貫性。
-- **輕量化架構**：後端採用 FastAPI 非同步框架，資料庫使用 SQLAlchemy 驅動的 SQLite。
-- **動態 UI/UX**：具備 User ID 切換功能、SweetAlert2 互動式彈窗以及自動滾動聊天介面。
+## 📌 專案介紹
+
+本專案是一個**角色扮演 AI 聊天網頁應用程式**，使用者可以在選角大廳中挑選喜歡的角色，並與具有獨特人格的 AI 進行沉浸式對話。每個角色都會針對每位使用者保存獨立的對話記憶，使 AI 能夠隨時間推移建立連貫、個性化的互動關係。
+
+核心亮點：
+
+- 角色人格透過 System Instructions（系統指令）深度定制
+- 對話依照使用者與角色分別儲存
+- 當對話歷史累積到一定數量時，LLM 會自動進行摘要，生成長期記憶
+- 前端可渲染動作描述文字（例如：`*臉紅地低下頭*`），打造視覺小說般的沉浸體驗
+
+---
+
+## 🏗️ 系統架構
+
+```
+┌─────────────────────────────────────────────────────┐
+│                   瀏覽器（使用者）                    │
+│         HTML5 + CSS3 + 原生 JavaScript              │
+│    選角大廳 ──► 聊天介面 ──► 記憶摘要檢視器           │
+└────────────────────┬────────────────────────────────┘
+                     │ HTTP（Fetch API）
+                     ▼
+┌─────────────────────────────────────────────────────┐
+│               FastAPI 後端（Python）                 │
+│                                                     │
+│  POST /chat          GET /memory/{user}/{persona}   │
+│       │                        │                    │
+│       ▼                        ▼                    │
+│  ┌──────────┐          ┌──────────────┐             │
+│  │  記憶模組  │          │  角色人格管理  │            │
+│  └────┬─────┘          └──────┬───────┘             │
+│       │                       │                     │
+│       ▼                       ▼                     │
+│  ┌──────────┐          ┌──────────────┐             │
+│  │ SQLite DB │          │  Gemini API  │             │
+│  └──────────┘          └──────────────┘             │
+└─────────────────────────────────────────────────────┘
+```
+
+**資料流程：**
+
+1. 使用者選擇角色 → 前端儲存 `persona_id`
+2. 使用者發送訊息 → `POST /chat`，夾帶 `user_id`、`persona_id`、`message`
+3. 後端從 SQLite 取得對話歷史與長期記憶摘要
+4. 將角色 System Instruction + 記憶內容組合成完整 Prompt
+5. 呼叫 Gemini API 並回傳回覆
+6. 前端將動作描述文字渲染成特殊樣式
+
+---
 
 ## 🛠️ 技術棧
 
-- **Backend**: Python, FastAPI
-- **Database**: SQLite, SQLAlchemy (ORM)
-- **AI Model**: Google Gemini 2.0 Flash API
-- **Frontend**: HTML5, CSS3, JavaScript (Fetch API)
+| 層級             | 技術                    | 用途                   |
+| ---------------- | ----------------------- | ---------------------- |
+| **後端**         | Python 3.11+、FastAPI   | 非同步 REST API 伺服器 |
+| **大型語言模型** | Google Gemini 2.5 Flash | 自然語言生成           |
+| **資料庫**       | SQLite + SQLAlchemy ORM | 對話歷史與記憶儲存     |
+| **前端**         | HTML5、CSS3、原生 JS    | UI、角色選擇、聊天介面 |
+| **資料驗證**     | Pydantic v2             | 請求格式驗證           |
+| **互動彈窗**     | SweetAlert2             | 使用者互動對話框       |
+
+---
+
+## ✨ 功能特色
+
+### 🎭 多角色選擇大廳
+
+- 角色卡片具備斜切變形（skew）與 hover 特效動畫
+- 每個角色透過 System Instructions 定義獨特人格
+- 完整 RWD 響應式支援 — 桌面版扇形卡片排列，手機版垂直列表
+
+### 💬 多輪對話
+
+- 每次請求都將完整對話歷史傳入 LLM
+- 短期記憶：每個 session 保留最近 10 筆訊息
+- 對話依照「使用者 × 角色」完全隔離儲存
+
+### 🧠 自動長期記憶摘要
+
+- 當對話歷史累積至 15 筆時，系統自動：
+  1. 抓取最舊的 10 筆對話
+  2. 呼叫 Gemini 將其整合成約 100 字的記憶摘要
+  3. 將摘要存入 `user_memory` 資料表
+  4. 刪除已摘要的舊紀錄以節省 Token 用量
+- 每次對話時，記憶摘要都會自動注入 Prompt 作為背景知識
+
+### 🎨 動作描述渲染
+
+- AI 回覆中的 `*動作*` 或 `（動作）` 會被渲染成斜體灰色文字
+- `「」` 引號內的對話會以品牌色加粗顯示
+- 創造出視覺小說 / 遊戲般的閱讀體驗
+
+### 🔄 動態使用者 ID 切換
+
+- 使用者可以在聊天中切換 ID，模擬不同使用者身份
+- 每對「使用者 × 角色」擁有完全獨立的記憶系統
+
+---
 
 ## 📦 安裝與啟動
 
-1. 複製專案：`git clone https://github.com/你的帳號/Immersion-Chat-Framework.git`
-2. 安裝套件：`pip install -r requirements.txt`
-3. 設定環境變數：建立 `.env` 並填入 `GEMINI_API_KEY=你的金鑰`
-4. 啟動服務：`uvicorn app.main:app --reload`
+```bash
+# 1. 複製專案
+git clone https://github.com/your-username/immersive-ai-chat.git
+cd immersive-ai-chat
 
-## 🎨 預覽
+# 2. 安裝相依套件
+pip install -r requirements.txt
 
-- 瀏覽器開啟 `http://127.0.0.1:8000` 即可開始與你想對話的角色對話。
+# 3. 設定環境變數
+echo "GEMINI_API_KEY=你的金鑰" > .env
+
+# 4. 啟動伺服器
+uvicorn app.main:app --reload
+
+# 5. 開啟瀏覽器
+# http://127.0.0.1:8000
+```
+
+---
+
+## 📁 專案結構
+
+```
+immersive-ai-chat/
+├── app/
+│   ├── main.py          # FastAPI 應用程式入口與路由定義
+│   ├── config.py        # 環境設定（API 金鑰、模型名稱）
+│   ├── schemas.py       # Pydantic 請求/回應模型
+│   ├── persona.py       # 角色人格 System Instructions
+│   ├── llm.py           # Gemini API 整合與自動重試邏輯
+│   ├── memory.py        # 對話歷史與自動摘要邏輯
+│   └── database.py      # SQLAlchemy 模型與資料庫初始化
+├── static/
+│   ├── index.html       # 單頁式前端
+│   ├── style.css        # 遊戲風格 UI 與動畫效果
+│   ├── javascript.js    # 聊天邏輯、角色切換、Fetch 呼叫
+│   └── image/           # 角色圖片與頭像
+├── requirements.txt
+├── .env                 # （不提交）API 金鑰
+└── README.md
+```
+
+---
+
+## 🔮 未來優化方向與路線圖
+
+### 🚀 高優先級
+
+- [ ] **Streaming 串流回覆** — 使用 Gemini 的串流 API，讓回覆逐字出現（如 ChatGPT），大幅提升使用者體驗
+- [ ] **WebSocket 支援** — 以 WebSocket 取代 HTTP 輪詢，實現真正的即時雙向通訊
+- [ ] **使用者身份驗證** — 以 JWT 登入系統取代手動輸入 User ID
+
+### 🎨 UI/UX 優化
+
+- [ ] **Live2D / Spine 角色動畫** — 加入可對應對話情境的角色動態立繪
+- [ ] **音效與背景音樂** — 為每個角色加入專屬環境音效與通知提示音
+- [ ] **打字速度差異化** — 模擬不同角色的打字節奏以增強沉浸感
+
+### 🧠 AI 與記憶升級
+
+- [ ] **情緒狀態追蹤** — 跨 session 追蹤角色情緒狀態，影響每次回覆的語氣
+- [ ] **向量資料庫（RAG）** — 以語意向量搜尋（如 ChromaDB、Pinecone）取代 SQLite 摘要，提升記憶召回準確度
+- [ ] **多模態輸入** — 允許使用者傳送圖片，讓角色對圖片內容做出反應
+
+### ⚙️ 工程優化
+
+- [ ] **非同步資料庫操作** — 從同步 SQLAlchemy 遷移至 `databases` 套件或 SQLAlchemy async 模式
+- [ ] **Docker 容器化** — 新增 `Dockerfile` 與 `docker-compose.yml`，一鍵部署
+- [ ] **單元測試與整合測試** — 使用 pytest 為 API 端點與記憶邏輯撰寫測試
+- [ ] **速率限制中介軟體** — 使用 `slowapi` 保護 API 端點，防止濫用
+
+---
+
+## 👤 作者
+
+- GitHub: [@yoyo](https://github.com/3706188)
